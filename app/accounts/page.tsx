@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { Plus, Building2, Wallet, TrendingUp, CreditCard } from "lucide-react"
-import { mockAccounts, Account, AccountType, fmtCurrency } from "@/lib/data"
+import { Account, AccountType, fmtCurrency } from "@/lib/data"
+import { useAppData } from "@/lib/store"
 
 const TYPE_ICON: Record<AccountType, React.ReactNode> = {
   bank: <Building2 size={14} />,
@@ -26,9 +27,11 @@ const TYPE_LABEL: Record<AccountType, string> = {
 }
 
 export default function AccountsPage() {
-  const [accounts, setAccounts] = useState<Account[]>(mockAccounts)
+  const { accounts, addAccount, loading } = useAppData()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: "", type: "bank" as AccountType, balance: "" })
+
+  if (loading) return <div className="p-8 text-zinc-500 text-sm">Loading…</div>
 
   const groups: AccountType[] = ["bank", "cash", "investment", "credit_card"]
 
@@ -44,16 +47,13 @@ export default function AccountsPage() {
     return accounts.filter(a => a.type === type).reduce((s, a) => s + a.balance, 0)
   }
 
-  function handleAdd(e: React.FormEvent) {
+  async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
     if (!form.name || !form.balance) return
     const balance = form.type === "credit_card"
       ? -Math.abs(Number(form.balance))
       : Number(form.balance)
-    setAccounts(prev => [
-      ...prev,
-      { id: `a${Date.now()}`, name: form.name, type: form.type, balance, currency: "MYR" },
-    ])
+    await addAccount({ name: form.name, type: form.type, balance, currency: "MYR" })
     setForm({ name: "", type: "bank", balance: "" })
     setShowForm(false)
   }

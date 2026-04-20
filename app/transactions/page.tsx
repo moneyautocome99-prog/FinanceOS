@@ -3,14 +3,12 @@
 import { useState, useMemo } from "react"
 import { Plus, Upload, Search, ChevronDown, Link } from "lucide-react"
 import {
-  mockTransactions,
-  mockAccounts,
   Transaction,
   ALL_CATEGORIES,
 } from "@/lib/data"
 import { TransactionForm } from "@/components/TransactionForm"
 import { CSVImportModal } from "@/components/CSVImportModal"
-import { useLiabilities, useReceivables } from "@/lib/store"
+import { useAppData, useLiabilities, useReceivables } from "@/lib/store"
 
 const TYPE_COLORS: Record<string, string> = {
   income: "text-emerald-400 bg-emerald-500/10",
@@ -23,9 +21,9 @@ const TYPE_COLORS: Record<string, string> = {
 }
 
 export default function TransactionsPage() {
+  const { accounts, transactions, addTransactions, loading } = useAppData()
   const { liabilities, payLiability } = useLiabilities()
-  const { receivables, collectReceivable, setReceivables } = useReceivables()
-  const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions)
+  const { receivables, collectReceivable } = useReceivables()
   const [showForm, setShowForm] = useState(false)
   const [showCSV, setShowCSV] = useState(false)
   const [search, setSearch] = useState("")
@@ -45,38 +43,22 @@ export default function TransactionsPage() {
       .sort((a, b) => b.date.localeCompare(a.date))
   }, [transactions, search, filterCategory, filterAccount, filterType])
 
+  if (loading) return <div className="p-8 text-zinc-500 text-sm">Loading…</div>
+
   const totalIncome = filtered.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
   const totalExpense = filtered.filter(t => t.type === "expense").reduce((s, t) => s + Math.abs(t.amount), 0)
 
-  function handleSave(txs: Array<Omit<Transaction, "id" | "accountName">>, liabilityId?: string, receivableId?: string) {
-    const now = Date.now()
-    setTransactions(prev => [
-      ...txs.map((tx, i) => ({
-        ...tx,
-        id: `t${now + i}`,
-        accountName: mockAccounts.find(a => a.id === tx.accountId)?.name ?? "",
-      })),
-      ...prev,
-    ])
-    if (liabilityId && txs[0]) {
-      payLiability(liabilityId, Math.abs(txs[0].amount))
+  async function handleSave(txs: Array<Omit<Transaction, "id" | "accountName">>, liabilityId?: string, receivableId?: string) {
+    let newPersonName: string | undefined
+    let newPersonAmount: number | undefined
+    let resolvedReceivableId = receivableId
+    if (receivableId?.startsWith("__new__:")) {
+      const [, name, amtStr] = receivableId.split(":")
+      newPersonName = name
+      newPersonAmount = Number(amtStr)
+      resolvedReceivableId = undefined
     }
-    if (receivableId && txs[0]) {
-      if (receivableId.startsWith("__new__:")) {
-        const [, name, amtStr] = receivableId.split(":")
-        const amt = Number(amtStr)
-        setReceivables([...receivables, {
-          id: `r${now}`,
-          name,
-          amount: amt,
-          outstanding: amt,
-          date: txs[0].date,
-          notes: txs[0].notes,
-        }])
-      } else {
-        collectReceivable(receivableId, Math.abs(txs[0].amount))
-      }
-    }
+    await addTransactions(txs, liabilityId, resolvedReceivableId, newPersonName, newPersonAmount)
   }
 
   return (
@@ -156,7 +138,7 @@ export default function TransactionsPage() {
             className="appearance-none bg-zinc-900 border border-zinc-800 rounded-md pl-3 pr-7 py-2 text-xs text-zinc-300 outline-none focus:border-zinc-700 cursor-pointer"
           >
             <option value="">All Accounts</option>
-            {mockAccounts.map(a => (
+            {accounts.map(a => (
               <option key={a.id} value={a.id}>{a.name}</option>
             ))}
           </select>
@@ -238,7 +220,7 @@ export default function TransactionsPage() {
 
       {showForm && (
         <TransactionForm
-          accounts={mockAccounts}
+          accounts={accounts}
           liabilities={liabilities}
           receivables={receivables}
           onClose={() => setShowForm(false)}
@@ -248,7 +230,7 @@ export default function TransactionsPage() {
 
       {showCSV && (
         <CSVImportModal
-          accounts={mockAccounts}
+          accounts={accounts}
           onClose={() => setShowCSV(false)}
           onImport={handleSave}
         />

@@ -185,81 +185,21 @@ export function getSpendingBreakdown(transactions: Transaction[]): GroupBreakdow
   }).filter(g => g.total > 0)
 }
 
-// --- Mock data ---
+export const mockAccounts: Account[] = []
 
-export const mockAccounts: Account[] = [
-  { id: "a1", name: "Maybank Savings", type: "bank", balance: 42500, currency: "MYR" },
-  { id: "a2", name: "CIMB Current", type: "bank", balance: 18200, currency: "MYR" },
-  { id: "a3", name: "RHB Fixed Deposit", type: "bank", balance: 80000, currency: "MYR" },
-  { id: "a4", name: "Cash Wallet", type: "cash", balance: 1200, currency: "MYR" },
-  { id: "a5", name: "Touch 'n Go eWallet", type: "cash", balance: 340, currency: "MYR" },
-  { id: "a6", name: "Moomoo", type: "investment", balance: 95000, currency: "MYR" },
-  { id: "a7", name: "Rakuten Trade", type: "investment", balance: 62000, currency: "MYR" },
-  { id: "a8", name: "EPF", type: "investment", balance: 110000, currency: "MYR" },
-  { id: "a9", name: "Maybank Visa Platinum", type: "credit_card", balance: -2840, currency: "MYR" },
-  { id: "a10", name: "CIMB Mastercard", type: "credit_card", balance: -1260, currency: "MYR" },
-]
+export const mockTransactions: Transaction[] = []
 
-const today = new Date()
-const y = today.getFullYear()
-const m = String(today.getMonth() + 1).padStart(2, "0")
+export const mockStocks: StockHolding[] = []
 
-export const mockTransactions: Transaction[] = [
-  { id: "t1", date: `${y}-${m}-01`, accountId: "a1", accountName: "Maybank Savings", category: "Salary", tags: [], amount: 8500, type: "income", notes: "April salary" },
-  { id: "t2", date: `${y}-${m}-03`, accountId: "a1", accountName: "Maybank Savings", category: "Housing", tags: ["fixed"], amount: -2200, type: "expense", notes: "Rent" },
-  { id: "t3", date: `${y}-${m}-05`, accountId: "a4", accountName: "Cash Wallet", category: "Food & Dining", tags: [], amount: -320, type: "expense", notes: "Weekly groceries" },
-  { id: "t4", date: `${y}-${m}-07`, accountId: "a6", accountName: "Moomoo", category: "Dividend", tags: ["passive"], amount: 420, type: "income", notes: "IGB REIT dividend" },
-  { id: "t5", date: `${y}-${m}-10`, accountId: "a1", accountName: "Maybank Savings", category: "Transport", tags: [], amount: -180, type: "expense", notes: "Petrol + toll" },
-  { id: "t6", date: `${y}-${m}-12`, accountId: "a6", accountName: "Moomoo", category: "Investment", tags: [], amount: -5000, type: "investment", notes: "Bought 1000 PBBANK" },
-  { id: "t7", date: `${y}-${m}-14`, accountId: "a1", accountName: "Maybank Savings", category: "Business Income", tags: ["freelance"], amount: 3200, type: "income", notes: "Consulting fee" },
-  { id: "t8", date: `${y}-${m}-15`, accountId: "a2", accountName: "CIMB Current", category: "Food & Dining", tags: [], amount: -240, type: "expense", notes: "Restaurants" },
-  { id: "t9", date: `${y}-${m}-18`, accountId: "a1", accountName: "Maybank Savings", category: "Entertainment", tags: [], amount: -150, type: "expense", notes: "Streaming + gym" },
-  { id: "t10", date: `${y}-${m}-20`, accountId: "a7", accountName: "Rakuten Trade", category: "Dividend", tags: ["passive"], amount: 280, type: "income", notes: "Maybank dividend" },
-]
+export const mockPhysicalAssets: PhysicalAsset[] = []
 
-export const mockStocks: StockHolding[] = [
-  { id: "s1", ticker: "PBBANK", name: "Public Bank", shares: 3000, avgCost: 3.92, currentPrice: 4.10, annualDividend: 0.18 },
-  { id: "s2", ticker: "MAYBANK", name: "Malayan Banking", shares: 2000, avgCost: 8.50, currentPrice: 9.12, annualDividend: 0.58 },
-  { id: "s3", ticker: "IGB REIT", name: "IGB REIT", shares: 5000, avgCost: 1.65, currentPrice: 1.72, annualDividend: 0.085 },
-  { id: "s4", ticker: "TENAGA", name: "Tenaga Nasional", shares: 800, avgCost: 11.20, currentPrice: 10.80, annualDividend: 0.42 },
-  { id: "s5", ticker: "DLADY", name: "Dutch Lady", shares: 200, avgCost: 28.50, currentPrice: 29.80, annualDividend: 1.20 },
-]
+export const mockLiabilities: Liability[] = []
 
-export const mockPhysicalAssets: PhysicalAsset[] = [
-  { id: "pa1", name: "Residential Property", type: "property", currentValue: 520000, acquisitionCost: 450000, acquiredDate: "2019-03-15", notes: "3-bedroom, self-occupied" },
-  { id: "pa2", name: "Personal Vehicle", type: "vehicle", currentValue: 92000, acquisitionCost: 120000, acquiredDate: "2022-06-01", notes: "" },
-]
+export const mockReceivables: Receivable[] = []
 
-export const mockLiabilities: Liability[] = [
-  { id: "l1", name: "Maybank Home Loan", type: "loan", principal: 450000, outstanding: 388000, interestRate: 3.85, monthlyPayment: 2340 },
-  { id: "l2", name: "CIMB Car Loan", type: "loan", principal: 85000, outstanding: 42000, interestRate: 2.6, monthlyPayment: 1180 },
-  { id: "l3", name: "Moomoo Margin", type: "margin", principal: 0, outstanding: 28000, interestRate: 5.5, monthlyPayment: 0 },
-  { id: "l4", name: "Rakuten Margin", type: "margin", principal: 0, outstanding: 15000, interestRate: 5.2, monthlyPayment: 0 },
-]
+export const mockRecurring: RecurringTransaction[] = []
 
-export const mockReceivables: Receivable[] = [
-  { id: "r1", name: "Friend A", amount: 2000, outstanding: 1500, date: "2026-02-10", notes: "Emergency cash" },
-  { id: "r2", name: "Friend B", amount: 500, outstanding: 500, date: "2026-03-22", notes: "Dinner split" },
-]
-
-export const mockRecurring: RecurringTransaction[] = [
-  { id: "rec1", name: "Monthly Salary", type: "income", accountId: "a1", category: "Salary", amount: 8500, dayOfMonth: 1, notes: "Monthly salary", tags: [], active: true },
-  { id: "rec2", name: "Rent", type: "expense", accountId: "a1", category: "Housing", amount: 2200, dayOfMonth: 3, notes: "Monthly rent", tags: ["fixed"], active: true },
-  { id: "rec3", name: "Home Loan Repayment", type: "loan_repayment", accountId: "a1", category: "Loan Repayment", amount: 2340, dayOfMonth: 1, notes: "Maybank home loan", tags: ["fixed"], active: true },
-  { id: "rec4", name: "Car Loan Repayment", type: "loan_repayment", accountId: "a1", category: "Loan Repayment", amount: 1180, dayOfMonth: 5, notes: "CIMB car loan", tags: ["fixed"], active: true },
-  { id: "rec5", name: "Netflix", type: "expense", accountId: "a9", category: "Subscription", amount: 55, dayOfMonth: 15, notes: "", tags: [], active: true },
-  { id: "rec6", name: "Spotify", type: "expense", accountId: "a9", category: "Subscription", amount: 17, dayOfMonth: 15, notes: "", tags: [], active: true },
-  { id: "rec7", name: "EPF Contribution", type: "expense", accountId: "a1", category: "EPF Contribution", amount: 1105, dayOfMonth: 1, notes: "Employee + employer EPF", tags: ["fixed"], active: true },
-]
-
-export const mockMonthlyData = [
-  { month: "Nov", income: 9200, expense: 4100 },
-  { month: "Dec", income: 12400, expense: 6200 },
-  { month: "Jan", income: 8800, expense: 3900 },
-  { month: "Feb", income: 9100, expense: 4400 },
-  { month: "Mar", income: 11200, expense: 5100 },
-  { month: "Apr", income: 12400, expense: 3090, current: true },
-]
+export const mockMonthlyData: { month: string; income: number; expense: number; current?: boolean }[] = []
 
 // --- Computed helpers ---
 

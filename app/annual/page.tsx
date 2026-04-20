@@ -2,12 +2,12 @@
 
 import { useState, useMemo } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { mockTransactions, fmtCurrency, mockMonthlyData } from "@/lib/data"
+import { fmtCurrency, Transaction } from "@/lib/data"
+import { useAppData } from "@/lib/store"
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
-// Blend mock historical data (pre-current-year) + real transactions
-function buildAnnualData(year: number) {
+function buildAnnualData(year: number, transactions: Transaction[]) {
   const now = new Date()
   const currentYear = now.getFullYear()
   const currentMonth = now.getMonth() + 1
@@ -20,33 +20,23 @@ function buildAnnualData(year: number) {
 
     if (isFuture) return { label, income: null, expense: null, net: null, savingsRate: null, isCurrent, isFuture }
 
-    // Use real transactions for current year months
-    if (year === currentYear) {
-      const txns = mockTransactions.filter(t => t.date.startsWith(monthKey))
-      const income = txns.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
-      const expense = txns.filter(t => t.type === "expense" || t.type === "investment").reduce((s, t) => s + Math.abs(t.amount), 0)
-      const net = income - expense
-      const savingsRate = income > 0 ? (net / income) * 100 : null
-      return { label, income, expense, net, savingsRate, isCurrent, isFuture }
-    }
-
-    // Use mock historical data for prior years (map by month label)
-    const hist = mockMonthlyData.find(d => d.month === label)
-    if (hist) {
-      const net = hist.income - hist.expense
-      const savingsRate = hist.income > 0 ? (net / hist.income) * 100 : null
-      return { label, income: hist.income, expense: hist.expense, net, savingsRate, isCurrent, isFuture }
-    }
-
-    return { label, income: 0, expense: 0, net: 0, savingsRate: null, isCurrent, isFuture }
+    const txns = transactions.filter(t => t.date.startsWith(monthKey))
+    const income = txns.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
+    const expense = txns.filter(t => t.type === "expense" || t.type === "investment").reduce((s, t) => s + Math.abs(t.amount), 0)
+    const net = income - expense
+    const savingsRate = income > 0 ? (net / income) * 100 : null
+    return { label, income, expense, net, savingsRate, isCurrent, isFuture }
   })
 }
 
 export default function AnnualPage() {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
+  const { transactions, loading } = useAppData()
 
-  const rows = useMemo(() => buildAnnualData(year), [year])
+  const rows = useMemo(() => buildAnnualData(year, transactions), [year, transactions])
+
+  if (loading) return <div className="p-8 text-zinc-500 text-sm">Loading…</div>
 
   const active = rows.filter(r => !r.isFuture && r.income !== null)
   const ytdIncome = active.reduce((s, r) => s + (r.income ?? 0), 0)

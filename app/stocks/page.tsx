@@ -2,11 +2,14 @@
 
 import { useState } from "react"
 import { Plus, TrendingUp, TrendingDown, Edit2, Check, X } from "lucide-react"
-import { mockStocks, StockHolding, fmtCurrency } from "@/lib/data"
+import { StockHolding, fmtCurrency } from "@/lib/data"
+import { useAppData } from "@/lib/store"
 
 export default function StocksPage() {
-  const [stocks, setStocks] = useState<StockHolding[]>(mockStocks)
+  const { stocks, addStock, updateStockPrice, loading } = useAppData()
   const [editingId, setEditingId] = useState<string | null>(null)
+
+  if (loading) return <div className="p-8 text-zinc-500 text-sm">Loading…</div>
   const [editPrice, setEditPrice] = useState("")
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ ticker: "", name: "", shares: "", avgCost: "", currentPrice: "", annualDividend: "" })
@@ -21,23 +24,22 @@ export default function StocksPage() {
     setEditPrice(stock.currentPrice.toString())
   }
 
-  function saveEdit(id: string) {
-    setStocks(prev => prev.map(s => s.id === id ? { ...s, currentPrice: Number(editPrice) } : s))
+  async function saveEdit(id: string) {
+    await updateStockPrice(id, Number(editPrice))
     setEditingId(null)
   }
 
-  function handleAdd(e: React.FormEvent) {
+  async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
     if (!form.ticker || !form.shares) return
-    setStocks(prev => [...prev, {
-      id: `s${Date.now()}`,
+    await addStock({
       ticker: form.ticker.toUpperCase(),
       name: form.name,
       shares: Number(form.shares),
       avgCost: Number(form.avgCost),
       currentPrice: Number(form.currentPrice),
       annualDividend: Number(form.annualDividend),
-    }])
+    })
     setForm({ ticker: "", name: "", shares: "", avgCost: "", currentPrice: "", annualDividend: "" })
     setShowAdd(false)
   }

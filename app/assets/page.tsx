@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { Plus, TrendingUp, TrendingDown, Home, Car, Briefcase, Gem, Package } from "lucide-react"
-import { mockPhysicalAssets, PhysicalAsset, AssetType, fmtCurrency } from "@/lib/data"
+import { PhysicalAsset, AssetType, fmtCurrency } from "@/lib/data"
+import { useAppData } from "@/lib/store"
 
 const TYPE_ICON: Record<AssetType, React.ReactNode> = {
   property:    <Home size={14} />,
@@ -28,26 +29,27 @@ const emptyForm = {
 }
 
 export default function AssetsPage() {
-  const [assets, setAssets] = useState<PhysicalAsset[]>(mockPhysicalAssets)
+  const { physicalAssets: assets, addPhysicalAsset, loading } = useAppData()
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState(emptyForm)
+
+  if (loading) return <div className="p-8 text-zinc-500 text-sm">Loading…</div>
 
   const totalValue = assets.reduce((s, a) => s + a.currentValue, 0)
   const totalCost  = assets.reduce((s, a) => s + a.acquisitionCost, 0)
   const totalGain  = totalValue - totalCost
 
-  function handleAdd(e: React.FormEvent) {
+  async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
     if (!form.name || !form.currentValue) return
-    setAssets(prev => [...prev, {
-      id: `pa${Date.now()}`,
+    await addPhysicalAsset({
       name: form.name,
       type: form.type,
       currentValue: Number(form.currentValue),
       acquisitionCost: Number(form.acquisitionCost) || 0,
       acquiredDate: form.acquiredDate,
       notes: form.notes,
-    }])
+    })
     setForm(emptyForm)
     setShowAdd(false)
   }

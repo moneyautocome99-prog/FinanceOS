@@ -6,11 +6,6 @@ import { KPICard } from "@/components/KPICard"
 import { MonthlyChart } from "@/components/MonthlyChart"
 import { SpendingBreakdown } from "@/components/SpendingBreakdown"
 import {
-  mockAccounts,
-  mockTransactions,
-  mockStocks,
-  mockLiabilities,
-  mockPhysicalAssets,
   getTotalAssets,
   getTotalLiabilities,
   getCreditCardDebt,
@@ -20,6 +15,7 @@ import {
   getSpendingBreakdown,
   fmtCurrency,
 } from "@/lib/data"
+import { useAppData } from "@/lib/store"
 
 function toMonthKey(y: number, m: number) {
   return `${y}-${String(m).padStart(2, "0")}`
@@ -40,6 +36,7 @@ function monthOptions() {
 }
 
 export default function Dashboard() {
+  const { accounts, transactions, stocks, physicalAssets, liabilities, loading } = useAppData()
   const now = new Date()
   const currentMonthKey = toMonthKey(now.getFullYear(), now.getMonth() + 1)
   const [fromMonth, setFromMonth] = useState(currentMonthKey)
@@ -49,24 +46,28 @@ export default function Dashboard() {
 
   const options = useMemo(() => monthOptions(), [])
 
+  const filteredTxnsForMemo = useMemo(
+    () => transactions
+      .filter(t => t.date >= fromMonth && t.date <= toMonth + "-31")
+      .filter(t => !filterAccount || t.accountId === filterAccount)
+      .filter(t => !filterType || t.type === filterType),
+    [transactions, fromMonth, toMonth, filterAccount, filterType]
+  )
+
+  if (loading) return <div className="p-8 text-zinc-500 text-sm">Loading…</div>
+
   function resetFilters() { setFilterAccount(""); setFilterType("") }
+
+  const filteredTxns = filteredTxnsForMemo
 
   const hasActiveFilter = !!(filterAccount || filterType)
   const isRange = fromMonth !== toMonth
 
-  const filteredTxns = useMemo(
-    () => mockTransactions
-      .filter(t => t.date >= fromMonth && t.date <= toMonth + "-31")
-      .filter(t => !filterAccount || t.accountId === filterAccount)
-      .filter(t => !filterType || t.type === filterType),
-    [fromMonth, toMonth, filterAccount, filterType]
-  )
-
-  const totalAssets = getTotalAssets(mockAccounts, mockStocks, mockPhysicalAssets)
-  const totalLiabilities = getTotalLiabilities(mockAccounts, mockLiabilities)
-  const ccDebt = getCreditCardDebt(mockAccounts)
-  const netWorth = getNetWorth(mockAccounts, mockStocks, mockLiabilities, mockPhysicalAssets)
-  const leverage = getLeverageRatio(mockAccounts, mockStocks, mockLiabilities, mockPhysicalAssets)
+  const totalAssets = getTotalAssets(accounts, stocks, physicalAssets)
+  const totalLiabilities = getTotalLiabilities(accounts, liabilities)
+  const ccDebt = getCreditCardDebt(accounts)
+  const netWorth = getNetWorth(accounts, stocks, liabilities, physicalAssets)
+  const leverage = getLeverageRatio(accounts, stocks, liabilities, physicalAssets)
   const { income, expense, net } = getMonthlyCashFlow(filteredTxns)
   const spendingBreakdown = getSpendingBreakdown(filteredTxns)
 
@@ -96,7 +97,7 @@ export default function Dashboard() {
             className="appearance-none bg-zinc-900 border border-zinc-800 rounded-md pl-3 pr-7 py-1.5 text-xs text-zinc-300 outline-none focus:border-zinc-600 cursor-pointer"
           >
             <option value="">All Accounts</option>
-            {mockAccounts.filter(a => a.type !== "credit_card").map(a => (
+            {accounts.filter(a => a.type !== "credit_card").map(a => (
               <option key={a.id} value={a.id}>{a.name}</option>
             ))}
           </select>
@@ -224,28 +225,28 @@ export default function Dashboard() {
         <h2 className="text-sm font-medium text-zinc-200 mb-4">Asset Overview</h2>
         <div className="grid grid-cols-5 gap-3">
           {(["bank", "cash", "investment"] as const).map(type => {
-            const accounts = mockAccounts.filter(a => a.type === type)
-            const total = accounts.reduce((s, a) => s + a.balance, 0)
+            const typeAccounts = accounts.filter(a => a.type === type)
+            const total = typeAccounts.reduce((s, a) => s + a.balance, 0)
             return (
               <div key={type} className="bg-zinc-800/50 rounded-md p-3">
                 <p className="text-[11px] uppercase tracking-widest text-zinc-500 mb-2">{type}</p>
                 <p className="text-lg font-bold tabular text-zinc-100">{fmtCurrency(total)}</p>
-                <p className="text-[11px] text-zinc-500 mt-1">{accounts.length} account{accounts.length !== 1 ? "s" : ""}</p>
+                <p className="text-[11px] text-zinc-500 mt-1">{typeAccounts.length} account{typeAccounts.length !== 1 ? "s" : ""}</p>
               </div>
             )
           })}
           <div className="bg-zinc-800/50 rounded-md p-3">
             <p className="text-[11px] uppercase tracking-widest text-zinc-500 mb-2">Physical</p>
             <p className="text-lg font-bold tabular text-zinc-100">
-              {fmtCurrency(mockPhysicalAssets.reduce((s, a) => s + a.currentValue, 0))}
+              {fmtCurrency(physicalAssets.reduce((s, a) => s + a.currentValue, 0))}
             </p>
-            <p className="text-[11px] text-zinc-500 mt-1">{mockPhysicalAssets.length} asset{mockPhysicalAssets.length !== 1 ? "s" : ""}</p>
+            <p className="text-[11px] text-zinc-500 mt-1">{physicalAssets.length} asset{physicalAssets.length !== 1 ? "s" : ""}</p>
           </div>
           {ccDebt > 0 && (
             <div className="bg-rose-500/5 border border-rose-500/20 rounded-md p-3">
               <p className="text-[11px] uppercase tracking-widest text-rose-500/70 mb-2">CC Owed</p>
               <p className="text-lg font-bold tabular text-rose-400">{fmtCurrency(ccDebt)}</p>
-              <p className="text-[11px] text-zinc-500 mt-1">{mockAccounts.filter(a => a.type === "credit_card").length} card{mockAccounts.filter(a => a.type === "credit_card").length !== 1 ? "s" : ""}</p>
+              <p className="text-[11px] text-zinc-500 mt-1">{accounts.filter(a => a.type === "credit_card").length} card{accounts.filter(a => a.type === "credit_card").length !== 1 ? "s" : ""}</p>
             </div>
           )}
         </div>

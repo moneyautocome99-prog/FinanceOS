@@ -6,9 +6,11 @@ import { Liability, LiabilityType, fmtCurrency } from "@/lib/data"
 import { useLiabilities, useReceivables } from "@/lib/store"
 
 export default function LiabilitiesPage() {
-  const { liabilities, setLiabilities } = useLiabilities()
+  const { liabilities, addLiability, loading } = useLiabilities()
   const { receivables } = useReceivables()
   const [showAdd, setShowAdd] = useState(false)
+
+  if (loading) return <div className="p-8 text-zinc-500 text-sm">Loading…</div>
   const [form, setForm] = useState({
     name: "", type: "loan" as LiabilityType,
     principal: "", outstanding: "", interestRate: "", monthlyPayment: "",
@@ -20,18 +22,17 @@ export default function LiabilitiesPage() {
   const marginTotal = liabilities.filter(l => l.type === "margin").reduce((s, l) => s + l.outstanding, 0)
   const totalReceivable = receivables.reduce((s, r) => s + r.outstanding, 0)
 
-  function handleAdd(e: React.FormEvent) {
+  async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
     if (!form.name || !form.outstanding) return
-    setLiabilities([...liabilities, {
-      id: `l${Date.now()}`,
+    await addLiability({
       name: form.name,
       type: form.type,
       principal: Number(form.principal),
       outstanding: Number(form.outstanding),
       interestRate: Number(form.interestRate),
       monthlyPayment: Number(form.monthlyPayment),
-    }])
+    })
     setForm({ name: "", type: "loan", principal: "", outstanding: "", interestRate: "", monthlyPayment: "" })
     setShowAdd(false)
   }

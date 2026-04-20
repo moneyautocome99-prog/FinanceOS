@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import { Plus, RefreshCw, Check, X } from "lucide-react"
-import { mockAccounts, INCOME_CATEGORIES, EXPENSE_CATEGORIES, TransactionType, fmtCurrency } from "@/lib/data"
-import { useRecurring } from "@/lib/store"
+import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, TransactionType, fmtCurrency } from "@/lib/data"
+import { useRecurring, useAppData } from "@/lib/store"
 
 const TYPE_COLORS: Record<string, string> = {
   income: "text-emerald-400 bg-emerald-500/10",
@@ -22,12 +22,15 @@ function ordinal(n: number) {
 }
 
 export default function RecurringPage() {
-  const { recurring, setRecurring } = useRecurring()
+  const { recurring, addRecurring, toggleRecurring, removeRecurring, loading } = useRecurring()
+  const { accounts } = useAppData()
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({
-    name: "", type: "expense" as TransactionType, accountId: mockAccounts[0]?.id ?? "",
+    name: "", type: "expense" as TransactionType, accountId: accounts[0]?.id ?? "",
     category: "", amount: "", dayOfMonth: "1", notes: "", tags: "",
   })
+
+  if (loading) return <div className="p-8 text-zinc-500 text-sm">Loading…</div>
 
   const totalMonthlyOut = recurring
     .filter(r => r.active && r.type !== "income")
@@ -36,11 +39,10 @@ export default function RecurringPage() {
     .filter(r => r.active && r.type === "income")
     .reduce((s, r) => s + r.amount, 0)
 
-  function handleAdd(e: React.FormEvent) {
+  async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
     if (!form.name || !form.amount || !form.category) return
-    setRecurring([...recurring, {
-      id: `rec${Date.now()}`,
+    await addRecurring({
       name: form.name,
       type: form.type,
       accountId: form.accountId,
@@ -50,17 +52,17 @@ export default function RecurringPage() {
       notes: form.notes,
       tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
       active: true,
-    }])
-    setForm({ name: "", type: "expense", accountId: mockAccounts[0]?.id ?? "", category: "", amount: "", dayOfMonth: "1", notes: "", tags: "" })
+    })
+    setForm({ name: "", type: "expense", accountId: accounts[0]?.id ?? "", category: "", amount: "", dayOfMonth: "1", notes: "", tags: "" })
     setShowAdd(false)
   }
 
   function toggleActive(id: string) {
-    setRecurring(recurring.map(r => r.id === id ? { ...r, active: !r.active } : r))
+    toggleRecurring(id)
   }
 
   function remove(id: string) {
-    setRecurring(recurring.filter(r => r.id !== id))
+    removeRecurring(id)
   }
 
   // Sort by day of month
@@ -133,7 +135,7 @@ export default function RecurringPage() {
               <label className="block text-[10px] uppercase tracking-widest text-zinc-500 mb-1.5">Account</label>
               <select value={form.accountId} onChange={e => setForm(f => ({ ...f, accountId: e.target.value }))}
                 className="field-input">
-                {mockAccounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
             <div>
@@ -201,7 +203,7 @@ export default function RecurringPage() {
                     {r.category}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-zinc-400">{mockAccounts.find(a => a.id === r.accountId)?.name ?? "—"}</td>
+                <td className="px-4 py-3 text-zinc-400">{accounts.find(a => a.id === r.accountId)?.name ?? "—"}</td>
                 <td className="px-4 py-3 text-right tabular text-zinc-400">{ordinal(r.dayOfMonth)}</td>
                 <td className={`px-4 py-3 text-right tabular font-medium ${r.type === "income" ? "text-emerald-400" : "text-rose-400"}`}>
                   {r.type === "income" ? "+" : "-"}{fmtCurrency(r.amount)}
