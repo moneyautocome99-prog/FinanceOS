@@ -33,14 +33,14 @@ export function Sidebar() {
   const router = useRouter()
   const [email, setEmail] = useState<string | null>(null)
 
-  if (pathname.startsWith("/login") || pathname.startsWith("/auth")) return null
-
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
       setEmail(data.user?.email ?? null)
     })
   }, [])
+
+  if (pathname.startsWith("/login") || pathname.startsWith("/auth")) return null
 
   async function handleLogout() {
     const supabase = createClient()
