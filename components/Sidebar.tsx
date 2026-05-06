@@ -80,21 +80,18 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Footer: user + logout */}
-      <div className="px-4 py-4 border-t border-zinc-800 space-y-3">
-        {email && (
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] text-zinc-500 truncate max-w-[140px]">{email}</p>
-            <button
-              onClick={handleLogout}
-              title="Sign out"
-              className="text-zinc-600 hover:text-rose-400 transition-colors ml-1 shrink-0"
-            >
-              <LogOut size={13} />
-            </button>
-          </div>
-        )}
+      {/* Footer: logout */}
+      <div className="px-4 py-4 border-t border-zinc-800 flex items-center justify-between">
         <p className="text-[10px] text-zinc-700 uppercase tracking-widest">v0.1 · Prototype</p>
+        {email && (
+          <button
+            onClick={handleLogout}
+            title="Sign out"
+            className="text-zinc-600 hover:text-rose-400 transition-colors shrink-0"
+          >
+            <LogOut size={13} />
+          </button>
+        )}
       </div>
     </aside>
   )
