@@ -94,7 +94,7 @@ function toReceivable(row: Record<string, unknown>): Receivable {
 }
 
 function toRecurring(row: Record<string, unknown>): RecurringTransaction {
-  return { id: row.id as string, name: row.name as string, type: row.type as RecurringTransaction["type"], accountId: row.account_id as string, category: row.category as string, amount: Number(row.amount), dayOfMonth: Number(row.day_of_month), notes: (row.notes as string) ?? "", tags: (row.tags as string[]) ?? [], active: row.active as boolean }
+  return { id: row.id as string, name: row.name as string, type: row.type as RecurringTransaction["type"], accountId: row.account_id as string, category: row.category as string, amount: Number(row.amount), dayOfMonth: Number(row.day_of_month), notes: (row.notes as string) ?? "", tags: (row.tags as string[]) ?? [], active: row.active as boolean, linkedLiabilityId: (row.linked_liability_id as string) ?? undefined, linkedLiabilityName: (row.linked_liability_name as string) ?? undefined }
 }
 
 // ── Provider ─────────────────────────────────────────────────────────────────
@@ -294,7 +294,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addRecurring = useCallback(async (r: Omit<RecurringTransaction, "id">) => {
     const sb = createClient()
     const { data: { user } } = await sb.auth.getUser()
-    const row = { id: uid(), user_id: user!.id, name: r.name, type: r.type, account_id: r.accountId, category: r.category, amount: r.amount, day_of_month: r.dayOfMonth, notes: r.notes, tags: r.tags, active: r.active }
+    const row = { id: uid(), user_id: user!.id, name: r.name, type: r.type, account_id: r.accountId, category: r.category, amount: r.amount, day_of_month: r.dayOfMonth, notes: r.notes, tags: r.tags, active: r.active, linked_liability_id: r.linkedLiabilityId ?? null, linked_liability_name: r.linkedLiabilityName ?? null }
     await sb.from("recurring_transactions").insert(row)
     setRecurring(prev => [...prev, toRecurring(row)])
   }, [])

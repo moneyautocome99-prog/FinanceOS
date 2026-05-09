@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Plus, RefreshCw, Check, X } from "lucide-react"
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, TransactionType, fmtCurrency } from "@/lib/data"
 import { useRecurring, useAppData } from "@/lib/store"
+import { useLiabilities } from "@/lib/store"
 
 const TYPE_COLORS: Record<string, string> = {
   income: "text-emerald-400 bg-emerald-500/10",
@@ -24,10 +25,12 @@ function ordinal(n: number) {
 export default function RecurringPage() {
   const { recurring, addRecurring, toggleRecurring, removeRecurring, loading } = useRecurring()
   const { accounts } = useAppData()
+  const { liabilities } = useLiabilities()
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({
     name: "", type: "expense" as TransactionType, accountId: accounts[0]?.id ?? "",
     category: "", amount: "", dayOfMonth: "1", notes: "", tags: "",
+    linkedLiabilityId: "",
   })
 
   if (loading) return <div className="p-8 text-zinc-500 text-sm">Loading…</div>
@@ -42,6 +45,7 @@ export default function RecurringPage() {
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
     if (!form.name || !form.amount || !form.category) return
+    const linkedLiability = liabilities.find(l => l.id === form.linkedLiabilityId)
     await addRecurring({
       name: form.name,
       type: form.type,
@@ -52,8 +56,10 @@ export default function RecurringPage() {
       notes: form.notes,
       tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
       active: true,
+      linkedLiabilityId: linkedLiability?.id,
+      linkedLiabilityName: linkedLiability?.name,
     })
-    setForm({ name: "", type: "expense", accountId: accounts[0]?.id ?? "", category: "", amount: "", dayOfMonth: "1", notes: "", tags: "" })
+    setForm({ name: "", type: "expense", accountId: accounts[0]?.id ?? "", category: "", amount: "", dayOfMonth: "1", notes: "", tags: "", linkedLiabilityId: "" })
     setShowAdd(false)
   }
 
@@ -130,6 +136,20 @@ export default function RecurringPage() {
               </select>
             </div>
           </div>
+
+          {/* Liability selector — only for loan_repayment */}
+          {form.type === "loan_repayment" && liabilities.length > 0 && (
+            <div>
+              <label className="block text-[10px] uppercase tracking-widest text-zinc-500 mb-1.5">Linked Liability (optional)</label>
+              <select value={form.linkedLiabilityId} onChange={e => setForm(f => ({ ...f, linkedLiabilityId: e.target.value }))}
+                className="field-input">
+                <option value="">— None —</option>
+                {liabilities.map(l => (
+                  <option key={l.id} value={l.id}>{l.name} (outstanding: {l.outstanding.toLocaleString()})</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="grid grid-cols-4 gap-3">
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-zinc-500 mb-1.5">Account</label>
@@ -192,6 +212,9 @@ export default function RecurringPage() {
                     <RefreshCw size={11} className="text-zinc-600 shrink-0" />
                     <span className="text-zinc-200 font-medium">{r.name}</span>
                   </div>
+                  {r.linkedLiabilityName && (
+                    <p className="text-[11px] text-amber-500/70 mt-0.5 ml-[19px]">→ {r.linkedLiabilityName}</p>
+                  )}
                   {r.tags.length > 0 && (
                     <div className="flex gap-1 mt-1 ml-[19px]">
                       {r.tags.map(t => <span key={t} className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-500 text-[10px]">{t}</span>)}

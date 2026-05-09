@@ -46,6 +46,8 @@ export interface RecurringTransaction {
   notes: string
   tags: string[]
   active: boolean
+  linkedLiabilityId?: string
+  linkedLiabilityName?: string
 }
 
 export interface StockHolding {
