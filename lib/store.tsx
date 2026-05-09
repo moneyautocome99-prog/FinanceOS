@@ -32,6 +32,8 @@ interface AppCtx {
 
   // Physical assets
   addPhysicalAsset: (a: Omit<PhysicalAsset, "id">) => Promise<void>
+  updatePhysicalAsset: (id: string, a: Omit<PhysicalAsset, "id">) => Promise<void>
+  deletePhysicalAsset: (id: string) => Promise<void>
 
   // Liabilities
   addLiability: (l: Omit<Liability, "id">) => Promise<void>
@@ -239,6 +241,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPhysicalAssets(prev => [...prev, toPhysicalAsset(row)])
   }, [])
 
+  const updatePhysicalAsset = useCallback(async (id: string, a: Omit<PhysicalAsset, "id">) => {
+    const sb = createClient()
+    const updates = { name: a.name, type: a.type, current_value: a.currentValue, acquisition_cost: a.acquisitionCost, acquired_date: a.acquiredDate, notes: a.notes }
+    await sb.from("physical_assets").update(updates).eq("id", id)
+    setPhysicalAssets(prev => prev.map(p => p.id === id ? { ...p, ...a } : p))
+  }, [])
+
+  const deletePhysicalAsset = useCallback(async (id: string) => {
+    const sb = createClient()
+    await sb.from("physical_assets").delete().eq("id", id)
+    setPhysicalAssets(prev => prev.filter(p => p.id !== id))
+  }, [])
+
   // ── Liabilities ─────────────────────────────────────────────────────────
   const addLiability = useCallback(async (l: Omit<Liability, "id">) => {
     const sb = createClient()
@@ -304,7 +319,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addAccount,
       addTransactions,
       addStock, updateStockPrice,
-      addPhysicalAsset,
+      addPhysicalAsset, updatePhysicalAsset, deletePhysicalAsset,
       addLiability, payLiability,
       addReceivable, collectReceivable,
       addRecurring, toggleRecurring, removeRecurring,
