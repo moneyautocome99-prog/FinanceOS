@@ -337,18 +337,18 @@ export function useAppData() {
 
 // ── Legacy hooks (backwards compat) ──────────────────────────────────────────
 export function useLiabilities() {
-  const { liabilities, addLiability, payLiability } = useAppData()
-  return { liabilities, setLiabilities: () => {}, payLiability, addLiability }
+  const { liabilities, addLiability, payLiability, loading } = useAppData()
+  return { liabilities, setLiabilities: () => {}, payLiability, addLiability, loading }
 }
 
 export function useReceivables() {
-  const { receivables, addReceivable, collectReceivable } = useAppData()
-  return { receivables, setReceivables: () => {}, collectReceivable, addReceivable }
+  const { receivables, addReceivable, collectReceivable, loading } = useAppData()
+  return { receivables, setReceivables: () => {}, collectReceivable, addReceivable, loading }
 }
 
 export function useRecurring() {
-  const { recurring, addRecurring, toggleRecurring, removeRecurring } = useAppData()
-  return { recurring, setRecurring: () => {}, addRecurring, toggleRecurring, removeRecurring }
+  const { recurring, addRecurring, toggleRecurring, removeRecurring, loading } = useAppData()
+  return { recurring, setRecurring: () => {}, addRecurring, toggleRecurring, removeRecurring, loading }
 }
 
 // Keep old export name working
